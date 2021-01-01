@@ -141,6 +141,13 @@ def make_stats_file():
 		f.close()
 		print("updated",stats_file)
 
+# refresh stats if asked to do so
+if len(sys.argv) > 1:
+	if sys.argv[1] == "-r":
+		print("Refreshing stats")
+		make_stats_file()
+
+
 # main
 games_running = []
 games_started = []
