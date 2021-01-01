@@ -12,14 +12,18 @@ if not os.path.isfile(games_list):
 	sys.exit(1)
 else:
 	games_db = []
+	names_db = []
 	f = open(games_list,"r")
 	lines = f.readlines()
 	f.close()
 	for line in lines: # add exe names to games_db
-		games_db.append(line.split("=")[1].rstrip())
+		for exe in line.split("=")[1].rstrip().split(","):
+			games_db.append(exe)
+			names_db.append(line.split("=")[0].rstrip())
 
-print("Tracking", len(games_db), "games.")
+print("Tracking " + str(len(lines)) + " games (" + str(len(games_db)) + " executables)")
 #print(games_db)
+#print(names_db)
 
 def get_running_exes(): # https://www.geeksforgeeks.org/python-get-list-of-running-processes/
 	wmic_output = os.popen('wmic process get description, processid').read().strip()
@@ -32,7 +36,10 @@ def get_running_exes(): # https://www.geeksforgeeks.org/python-get-list-of-runni
 			exes.append(exe)
 	return exes
 
-def update_playtimes(exe,added_playtime):
+def name_from_exe(exe):
+	return names_db[games_db.index(exe)]
+
+def update_playtimes(game_name,added_playtime):
 	secs = added_playtime.total_seconds()
 
 	db_games = []
@@ -54,8 +61,8 @@ def update_playtimes(exe,added_playtime):
 			db_games.append(line.split("=")[0].rstrip())
 			db_playtimes.append(line.split("=")[1].rstrip())
 
-	if exe in db_games:
-		index = db_games.index(exe)
+	if game_name in db_games:
+		index = db_games.index(game_name)
 		previous_playtime = float(db_playtimes[index])
 		print("? previous playtime:",previous_playtime)
 		print("+ adding",secs)
@@ -63,7 +70,7 @@ def update_playtimes(exe,added_playtime):
 		print("= new playtime:", new_playtime)
 		db_playtimes[index] = new_playtime
 	else:
-		db_games.append(exe)
+		db_games.append(game_name)
 		db_playtimes.append(secs)
 
 	# write db_games and db_playtimes to file
@@ -77,18 +84,6 @@ def update_playtimes(exe,added_playtime):
 	return True
 
 def make_stats_file():
-	# read and associate pretty names
-	pretty_names = []
-	f = open(games_list,"r")
-	lines = f.readlines()
-	f.close()
-
-	for line in lines:
-		name = line.split("=")[0].rstrip()
-		exe = line.split("=")[1].rstrip()
-		pretty_names.append( {"exe": exe, "name": name} )
-
-	# now read playtimes and match pretty names
 	if os.path.isfile(playtimes_db):
 		f = open(playtimes_db,"r")
 		lines = f.readlines()
@@ -96,12 +91,7 @@ def make_stats_file():
 
 		db = []
 		for line in lines:
-			game_exe = line.split("=")[0].rstrip()
-			name = game_exe # in case we dont find pretty name... shouldnt happen though
-			for entry in pretty_names:
-				if game_exe == entry["exe"]:
-					name = entry["name"]
-					break
+			name = line.split("=")[0].rstrip()
 			playtime = float(line.split("=")[1].rstrip())
 			db.append( {"name": name, "seconds_played": playtime } )
 
@@ -162,7 +152,7 @@ while True:
 		if game in exes and game not in games_running:
 
 			time_started = datetime.now()
-			print("started playing",game,time_started)
+			print("started playing",name_from_exe(game),time_started)
 			print()
 
 			games_running.append(game)
@@ -171,18 +161,19 @@ while True:
 		elif game in games_running and game not in exes:
 
 			time_stopped = datetime.now()
-			print("stopped playing",game,time_stopped)
+			print("stopped playing",name_from_exe(game),time_stopped)
 
 			index = games_running.index(game)
 
 			time_started = games_started[index]
 			time_played = time_stopped - time_started
-			print(game,"played for",time_played)
+			print(name_from_exe(game),"played for",time_played)
 
 			games_running.pop(index)
 			games_started.pop(index)
 
-			if update_playtimes(game,time_played):
+
+			if update_playtimes(name_from_exe(game),time_played):
 				make_stats_file()
 				print()
 

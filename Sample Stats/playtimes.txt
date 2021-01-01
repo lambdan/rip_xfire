@@ -1,3 +1,5 @@
-osu!.exe=10195.246767999999
-Cyberpunk2077.exe=6986.224047
-csgo.exe=190.390991
+osu!=11429.085015999999
+Cyberpunk 2077=7017.2334169999995
+Counter-Strike: Global Offensive=490510
+Beat Saber=25340
+Eleven: Table Tennis VR=319.492151

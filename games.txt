@@ -3,3 +3,7 @@ Cyberpunk 2077=Cyberpunk2077.exe
 The Sims 4=TS4_x64.exe
 World of Warcraft=Wow.exe
 Counter-Strike: Global Offensive=csgo.exe
+Beat Saber=Beat Saber.exe
+Half-Life: Alyx=hlvr.exe
+Eleven: Table Tennis VR=pong_waves_vr.exe
+Grand Theft Auto: San Andreas=gta_sa.exe,gta-sa.exe
