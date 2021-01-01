@@ -7,6 +7,8 @@ playtimes_db = "playtimes.txt"
 refresh_interval = 5
 make_backups = True
 
+print("Running in", os.getcwd())
+
 if not os.path.isfile(games_list):
 	print(games_list,"not found")
 	sys.exit(1)
@@ -141,7 +143,8 @@ if len(sys.argv) > 1:
 # main
 games_running = []
 games_started = []
-print("OK, go play games. I'll keep track.")
+print()
+print(datetime.now(), "OK! Go play games. I'll keep track.")
 while True:
 	#print("loop")
 	#print("games running:",games_running)
@@ -152,8 +155,7 @@ while True:
 		if game in exes and game not in games_running:
 
 			time_started = datetime.now()
-			print("started playing",name_from_exe(game),time_started)
-			print()
+			print(time_started, "Started playing", name_from_exe(game))
 
 			games_running.append(game)
 			games_started.append(time_started)
@@ -161,7 +163,7 @@ while True:
 		elif game in games_running and game not in exes:
 
 			time_stopped = datetime.now()
-			print("stopped playing",name_from_exe(game),time_stopped)
+			print(time_stopped, "Stopped playing", name_from_exe(game))
 
 			index = games_running.index(game)
 
@@ -175,6 +177,6 @@ while True:
 
 			if update_playtimes(name_from_exe(game),time_played):
 				make_stats_file()
-				print()
+				print(datetime.now(), "OK! Ready for more games to be played.")
 
 	time.sleep(refresh_interval)
