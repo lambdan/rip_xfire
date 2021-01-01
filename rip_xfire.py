@@ -77,7 +77,7 @@ def update_playtimes(game_name,added_playtime):
 
 	# write db_games and db_playtimes to file
 	f = open(playtimes_db,"w")
-	for game in db_games:
+	for game in sorted(db_games):
 		secs = db_playtimes[db_games.index(game)]
 		f.write(game + "=" + str(secs) + "\n")
 	f.close()
