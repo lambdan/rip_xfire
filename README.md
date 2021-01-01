@@ -10,3 +10,7 @@ So this is just a simple script that looks at what `.exe`'s you have running and
 In order to recognize games you simply add them to `games.txt` - it should be pretty self-explanatory.
 
 After you exit a game it updates your total playtime and also writes the simple stats in a simple HTML document and a `.csv` you can import into Excel or whatever you like to visualize.
+
+# Tips and tricks
+
+- You can run with the `-r` parameter to force a refresh of the Stats files on launch. Useful if you're manually editting `playtimes.txt`
