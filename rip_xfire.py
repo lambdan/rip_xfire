@@ -1,5 +1,5 @@
 import os,sys,time,shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 from natsort import natsorted
 
 games_list = "games.txt"
@@ -41,6 +41,10 @@ def get_running_exes(): # https://www.geeksforgeeks.org/python-get-list-of-runni
 def name_from_exe(exe):
 	return names_db[games_db.index(exe)]
 
+def secs_to_hhmmss(secs):
+	# https://stackoverflow.com/a/1384465
+	return str(timedelta(seconds=round(secs)))
+
 def update_playtimes(game_name,added_playtime):
 	secs = added_playtime.total_seconds()
 
@@ -66,10 +70,10 @@ def update_playtimes(game_name,added_playtime):
 	if game_name in db_games:
 		index = db_games.index(game_name)
 		previous_playtime = float(db_playtimes[index])
-		print("? previous playtime:",previous_playtime)
-		print("+ adding",secs)
+		print("? previous playtime:", secs_to_hhmmss(previous_playtime))
+		print("+ adding", secs_to_hhmmss(secs))
 		new_playtime = previous_playtime + secs
-		print("= new playtime:", new_playtime)
+		print("= new playtime:", secs_to_hhmmss(new_playtime))
 		db_playtimes[index] = new_playtime
 	else:
 		db_games.append(game_name)
@@ -169,7 +173,7 @@ while True:
 
 			time_started = games_started[index]
 			time_played = time_stopped - time_started
-			print(name_from_exe(game),"played for",time_played)
+			print(name_from_exe(game),"played for",secs_to_hhmmss(time_played.total_seconds()))
 
 			games_running.pop(index)
 			games_started.pop(index)
