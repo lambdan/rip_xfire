@@ -122,19 +122,43 @@ def make_stats_file():
 
 		# HTML stats
 		stats_file = "Stats.html"
+		total_played = 0
 		f = open(stats_file,"w")
-		f.write('<html><head><meta charset="utf8"></head><body>')
+		f.write('<html><head><meta charset="utf8">')
+		f.write('<style>.game-name {color: #f2bc02; } body {font-family: Tahoma; background-color:#061222; color:white;} td {padding:8px;} table,td {border:1px solid #0e4d75; border-collapse:collapse;}</style>')
+		f.write('</head><body>')
+		f.write('<p>Playtimes as of ' + str( time.strftime("%Y-%m-%d %H:%M:%S") ) + '</p>')
+		f.write('<table>')
+		# Write table
 		for game in reversed(d): # reverse to get most on top
 			name = game['name']
+			total_played += game['seconds_played']
 			hours = round( game['seconds_played'] / 3600 )
+			f.write('<tr><td><div class="game-name">' + name + '</div></td>')
+			f.write('<td><span title="' + secs_to_hhmmss(game['seconds_played']) + '">')
 			if hours < 1:
-				f.write("<li><b>" + name + "</b>: <1 hour</li>")
+				f.write("<1 hour")
 			elif hours == 1:
-				f.write("<li><b>" + name + "</b>: 1 hour</li>")
+				f.write("1 hour")
 			else:
-				f.write("<li><b>" + name + "</b>: " + str(hours) + " hours</li>")
+				f.write(str(hours) + " hours")
+			f.write("</span></td>")
+			f.write("</tr>")
+
+		# Write total
+		total_hours = round( total_played / 3600 )
+		f.write("<tr><td><b>Total:</b></td>")
+		f.write('<td><span title="' + secs_to_hhmmss(total_played) + '"><b>')
+		if total_hours < 1:
+			f.write("<1 hour")
+		elif total_hours == 1:
+			f.write("1 hour")
+		else:
+			f.write(str(total_hours) + " hours")
+		f.write("</b></td></tr></table>")
 		f.write("</body></html>")
 		f.close()
+
 		print("updated",stats_file)
 
 # refresh stats if asked to do so

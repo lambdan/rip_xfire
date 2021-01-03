@@ -1,5 +1,0 @@
-osu!=11429.085015999999
-Cyberpunk 2077=7017.2334169999995
-Counter-Strike: Global Offensive=490510
-Beat Saber=25340
-Eleven: Table Tennis VR=319.492151
