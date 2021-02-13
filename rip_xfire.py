@@ -183,7 +183,7 @@ while True:
 		if game in exes and game not in games_running:
 
 			time_started = datetime.now()
-			print(time_started, "Started playing", name_from_exe(game))
+			print(time_started, "Started playing", name_from_exe(game), "(" + game + ")")
 
 			games_running.append(game)
 			games_started.append(time_started)
