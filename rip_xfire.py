@@ -72,7 +72,7 @@ def update_playtimes(game_name,added_playtime):
 		previous_playtime = float(db_playtimes[index])
 		print("? previous playtime:", secs_to_hhmmss(previous_playtime))
 		print("+ adding", secs_to_hhmmss(secs))
-		new_playtime = previous_playtime + secs
+		new_playtime = int(previous_playtime + secs)
 		print("= new playtime:", secs_to_hhmmss(new_playtime))
 		db_playtimes[index] = new_playtime
 	else:
