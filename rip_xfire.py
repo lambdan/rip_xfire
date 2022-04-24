@@ -113,7 +113,7 @@ def make_stats_file():
 		f.write("Game,Hours\n") # top row (column names)
 		for game in reversed(d): # reverse to get most on top
 			name = game['name']
-			hours = round( game['seconds_played'] / 3600 )
+			hours = round(game['seconds_played'] / 3600, 1)
 			if hours < 1:
 				hours = "<1"
 			f.write(name + "," + str(hours) + "\n")
@@ -133,7 +133,7 @@ def make_stats_file():
 		for game in reversed(d): # reverse to get most on top
 			name = game['name']
 			total_played += game['seconds_played']
-			hours = round( game['seconds_played'] / 3600 )
+			hours = round(game['seconds_played'] / 3600, 1)
 			f.write('<tr><td><div class="game-name">' + name + '</div></td>')
 			f.write('<td><span title="' + secs_to_hhmmss(game['seconds_played']) + '">')
 			if hours < 1:
@@ -172,7 +172,7 @@ if len(sys.argv) > 1:
 games_running = []
 games_started = []
 print()
-print(datetime.now(), "OK! Go play games. I'll keep track.")
+print("OK! Go play games. I'll keep track.")
 while True:
 	#print("loop")
 	#print("games running:",games_running)
@@ -205,6 +205,7 @@ while True:
 
 			if update_playtimes(name_from_exe(game),time_played):
 				make_stats_file()
-				print(datetime.now(), "OK! Ready for more games to be played.")
+				print("OK! Ready for more games to be played.")
+				print()
 
 	time.sleep(refresh_interval)
