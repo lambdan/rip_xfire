@@ -1,10 +1,11 @@
 import os,sys,time,shutil,json
+from playsound import playsound # pip3 install playsound==1.2.2 (NOTE: version is important: https://stackoverflow.com/a/69547923)
 from datetime import datetime, timedelta
 from natsort import natsorted
 
 games_list = "games.tsv"
 playtimes_db = "playtimes.json"
-refresh_interval = 5
+refresh_interval = 2
 
 print("Running in", os.getcwd())
 
@@ -81,6 +82,9 @@ def update_playtimes(exe,played_secs,unixdate):
 			'lastplayed': unixdate
 		}
 		j.append(g)
+
+	# sort by recency
+	j = sorted(j, key=lambda k: k.get('lastplayed', 0), reverse=True)
 
 	# write db_games and db_playtimes to file
 	f = open(playtimes_db,"w")
@@ -165,6 +169,8 @@ games_running = []
 games_started = []
 print()
 print("OK! Go play games. I'll keep track.")
+playsound("xfire1.wav")
+
 while True:
 	#print("loop")
 	#print("games running:",games_running)
@@ -176,6 +182,7 @@ while True:
 
 			time_started = datetime.now()
 			print(time_started, exe, "started")
+			playsound("xfire2.wav")
 
 			games_running.append(exe)
 			games_started.append(time_started)
@@ -194,6 +201,7 @@ while True:
 			games_running.pop(index)
 			games_started.pop(index)
 
+			playsound("xfire3.wav")
 
 			if update_playtimes(exe,time_played,int(time_stopped.timestamp())):
 				make_stats_file()
