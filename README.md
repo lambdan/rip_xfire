@@ -7,10 +7,10 @@ And what was nice about it was that it kept track no matter how you launched gam
 This is becoming more and more annoying nowadays with every company having their own launcher or locking games to exclusive game launchers (*cough* Epic *cough*). And every launcher displays time played in different spots, if at all. 
 
 So this is just a simple script that looks at what `.exe`'s you have running and if it recognizes it, it keeps track of how long it's been running.
-In order to recognize games you simply add them to `games.txt` - it should be pretty self-explanatory.
+In order to recognize games you simply add them to `games.tsv` - it should be pretty self-explanatory.
 
 After you exit a game it updates your total playtime and also writes the simple stats in a simple HTML document and a `.csv` you can import into Excel or whatever you like to visualize.
 
 # Tips and tricks
 
-- You can run with the `-r` parameter to force a refresh of the Stats files on launch. Useful if you're manually editting `playtimes.txt`
+- You can run with the `-r` parameter to force a refresh of the Stats files on launch. Useful if you're manually editting `playtimes.json`

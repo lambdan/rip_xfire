@@ -1,34 +1,38 @@
-import os,sys,time,shutil
+import os,sys,time,shutil,json
 from datetime import datetime, timedelta
 from natsort import natsorted
 
-games_list = "games.txt"
-playtimes_db = "playtimes.txt"
+games_list = "games.tsv"
+playtimes_db = "playtimes.json"
 refresh_interval = 5
-make_backups = True
 
 print("Running in", os.getcwd())
+
+game_exes = []
+game_names = []
 
 if not os.path.isfile(games_list):
 	print(games_list,"not found")
 	sys.exit(1)
 else:
-	games_db = []
-	names_db = []
 	f = open(games_list,"r")
 	lines = f.readlines()
 	f.close()
-	for line in lines: # add exe names to games_db
-		for exe in line.split("=")[1].rstrip().split(","):
-			games_db.append(exe)
-			names_db.append(line.split("=")[0].rstrip())
 
-print("Tracking " + str(len(lines)) + " games (" + str(len(games_db)) + " executables)")
-#print(games_db)
-#print(names_db)
+	for line in lines: # add exe names to games_db
+		title = line.split("\t")[1].strip()
+		#print(title)
+
+		for exe in line.split("\t")[0].strip().split(","):
+			game_exes.append(exe)
+			game_names.append(title)
+			print("Tracking:", title, exe)
+
+print("EXEs tracked:", len(game_exes))
 
 def get_running_exes(): # https://www.geeksforgeeks.org/python-get-list-of-running-processes/
-	wmic_output = os.popen('wmic process get description, processid').read().strip()
+	wmic_output = os.popen('wmic process get description, processid').read().strip() 
+	# TODO: can get path by using ExecutablePath (useful for games using same .exe name, like re3)
 	items = wmic_output.split("\n")
 	exes = []
 	for line in items:
@@ -45,78 +49,71 @@ def secs_to_hhmmss(secs):
 	# https://stackoverflow.com/a/1384465
 	return str(timedelta(seconds=round(secs)))
 
-def update_playtimes(game_name,added_playtime):
-	secs = added_playtime.total_seconds()
+def secs_to_hrs(secs):
+	return round(secs/3600, 1)
 
-	db_games = []
-	db_playtimes = []
+def update_playtimes(exe,played_secs,unixdate):
+
+	title = game_names[game_exes.index(exe)]
+
+	j = []
 
 	if os.path.isfile(playtimes_db):
+		with open(playtimes_db, "r") as f:
+			j = json.load(f)
 
-		if make_backups: # make backup
-			if not os.path.isdir("./backups"): 
-				os.makedirs("./backups")
-			backup_path = "./backups/playtimes_db_" + time.strftime("%Y%m%d-%H%M%S") + ".txt"
-			shutil.copy(playtimes_db, backup_path)
+	#print(j)
 
-		f = open(playtimes_db,"r")
-		lines = f.readlines()
-		f.close()
+	found = False
+	for g in j:
+		#print(g)
+		if g["title"] == title:
+			found = True
+			g["secs"] = g["secs"] + played_secs
+			g["lastplayed"] = unixdate
+			print("new total play time for", title, ":", secs_to_hrs(g["secs"]), "hrs")
 
-		for line in lines:
-			db_games.append(line.split("=")[0].rstrip())
-			db_playtimes.append(line.split("=")[1].rstrip())
-
-	if game_name in db_games:
-		index = db_games.index(game_name)
-		previous_playtime = float(db_playtimes[index])
-		print("? previous playtime:", secs_to_hhmmss(previous_playtime))
-		print("+ adding", secs_to_hhmmss(secs))
-		new_playtime = int(previous_playtime + secs)
-		print("= new playtime:", secs_to_hhmmss(new_playtime))
-		db_playtimes[index] = new_playtime
-	else:
-		db_games.append(game_name)
-		db_playtimes.append(secs)
+	if not found:
+		print(title, "was not in playtimes db, adding it...")
+		g = {
+			'title': title,
+			'secs': played_secs,
+			'lastplayed': unixdate
+		}
+		j.append(g)
 
 	# write db_games and db_playtimes to file
 	f = open(playtimes_db,"w")
-	for game in sorted(db_games):
-		secs = db_playtimes[db_games.index(game)]
-		f.write(game + "=" + str(secs) + "\n")
+	f.write(json.dumps(j, indent=2))
 	f.close()
 	print("updated",playtimes_db)
 
 	return True
 
 def make_stats_file():
+	j = []
+
 	if os.path.isfile(playtimes_db):
-		f = open(playtimes_db,"r")
-		lines = f.readlines()
-		f.close()
+		with open(playtimes_db, "r") as f:
+			j = json.load(f)
 
-		db = []
-		for line in lines:
-			name = line.split("=")[0].rstrip()
-			playtime = float(line.split("=")[1].rstrip())
-			db.append( {"name": name, "seconds_played": playtime } )
-
-		#print(db)
-
+	
 		# sort by most played (most seconds)
-		d = natsorted(db, key = lambda i: i['seconds_played'])
-		#print(d)
+		j = sorted(j, key=lambda k: k.get('secs', 0), reverse=True)
 
 		# CSV stats
 		stats_file = "Stats.csv"
 		f = open(stats_file,"w")
-		f.write("Game,Hours\n") # top row (column names)
-		for game in reversed(d): # reverse to get most on top
-			name = game['name']
-			hours = round(game['seconds_played'] / 3600, 1)
-			if hours < 1:
-				hours = "<1"
-			f.write(name + "," + str(hours) + "\n")
+		f.write("Game,Hours,LastPlayed\n") # top row (column names)
+		for game in j: # reverse to get most on top
+			name = game['title']
+			hours = round(game['secs'] / 3600, 1)
+
+			date = ""
+			if game['lastplayed'] > 0:
+				date = (datetime.fromtimestamp(game['lastplayed']).strftime('%Y-%m-%d %H:%M:%S'))
+
+			f.write(name + "," + str(hours) + "," + date + "\n")
 		f.close()
 		print("updated",stats_file)
 
@@ -129,32 +126,27 @@ def make_stats_file():
 		f.write('</head><body>')
 		f.write('<p>Playtimes as of ' + str( time.strftime("%Y-%m-%d %H:%M:%S") ) + '</p>')
 		f.write('<table>')
+		f.write("<tr><th>Title</th><th>Hours</th><th>Last Played</th></tr>")
 		# Write table
-		for game in reversed(d): # reverse to get most on top
-			name = game['name']
-			total_played += game['seconds_played']
-			hours = round(game['seconds_played'] / 3600, 1)
+		for game in j: # reverse to get most on top
+			name = game['title']
+			total_played += game['secs']
+			date = ""
+			if game['lastplayed'] > 0:
+				date = (datetime.fromtimestamp(game['lastplayed']).strftime('%Y-%m-%d %H:%M:%S'))
+			hours = round(game['secs'] / 3600, 1)
 			f.write('<tr><td><div class="game-name">' + name + '</div></td>')
-			f.write('<td><span title="' + secs_to_hhmmss(game['seconds_played']) + '">')
-			if hours < 1:
-				f.write("<1 hour")
-			elif hours == 1:
-				f.write("1 hour")
-			else:
-				f.write(str(hours) + " hours")
+			f.write('<td><span title="' + secs_to_hhmmss(game['secs']) + '">')
+			f.write(str(hours) + " hrs")
 			f.write("</span></td>")
+			f.write("<td>" + str(date) + "</td>")
 			f.write("</tr>")
 
 		# Write total
 		total_hours = round( total_played / 3600 )
 		f.write("<tr><td><b>Total:</b></td>")
 		f.write('<td><span title="' + secs_to_hhmmss(total_played) + '"><b>')
-		if total_hours < 1:
-			f.write("<1 hour")
-		elif total_hours == 1:
-			f.write("1 hour")
-		else:
-			f.write(str(total_hours) + " hours")
+		f.write(str(total_hours) + " hrs")
 		f.write("</b></td></tr></table>")
 		f.write("</body></html>")
 		f.close()
@@ -179,31 +171,31 @@ while True:
 	#print("games started:",games_started)
 
 	exes = get_running_exes()
-	for game in games_db:
-		if game in exes and game not in games_running:
+	for exe in game_exes:
+		if exe in exes and exe not in games_running:
 
 			time_started = datetime.now()
-			print(time_started, "Started playing", name_from_exe(game), "(" + game + ")")
+			print(time_started, exe, "started")
 
-			games_running.append(game)
+			games_running.append(exe)
 			games_started.append(time_started)
 
-		elif game in games_running and game not in exes:
+		elif exe in games_running and exe not in exes:
 
 			time_stopped = datetime.now()
-			print(time_stopped, "Stopped playing", name_from_exe(game))
+			print(time_stopped, exe, "stopped")
 
-			index = games_running.index(game)
+			index = games_running.index(exe)
 
 			time_started = games_started[index]
-			time_played = time_stopped - time_started
-			print(name_from_exe(game),"played for",secs_to_hhmmss(time_played.total_seconds()))
+			time_played = int( round( (time_stopped - time_started).total_seconds() ) )
+			print(exe,"ran for",time_played,"secs")
 
 			games_running.pop(index)
 			games_started.pop(index)
 
 
-			if update_playtimes(name_from_exe(game),time_played):
+			if update_playtimes(exe,time_played,int(time_stopped.timestamp())):
 				make_stats_file()
 				print("OK! Ready for more games to be played.")
 				print()
